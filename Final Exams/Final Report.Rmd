@@ -7,7 +7,7 @@ author:
     correspondingauthor: true
 address:
   - code: Uganda Christian University
-    organization: Department of Computing and Technology  # Specify the faculty
+    organization: Department of Computing and Technology 
     addressline: P.O. Box 4
     city: Kampala
     country: Uganda
