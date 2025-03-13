@@ -1,0 +1,1367 @@
+---
+title: "FACULTY OF ENGINEERING, DESIGN AND TECHNOLOGY DEPARTMENT OF COMPUTING AND TECHNOLOGY EASTER 2025 SEMESTER EXAMINATION - DATA SCIENCE LIFE CYCLE FINAL EXAMS"
+author:
+  - name: Efprem Okello - J25M19/001, Access Number - B31324
+    email: okelloefprem@gmail.com  # Replace with actual email
+    affiliation: Uganda Christian University
+    correspondingauthor: true
+address:
+  - code: Uganda Christian University
+    organization: Department of Computing and Technology  # Specify the faculty
+    addressline: P.O. Box 4
+    city: Kampala
+    country: Uganda
+abstract: |
+     This report explores three key themes: Sentiment Analysis, AI in Education, and Financial Inclusion in East Africa, showcasing the power of data-driven insights to address modern challenges.
+     Sentiment Analysis: Analyzes Amazon reviews to understand consumer emotions and preferences. Findings reveal balanced sentiments, highlighting product quality and usability, helping businesses improve customer relationships and products.
+     AI in Education: Demonstrates how AI enhances higher education by analyzing student performance and improving assessments. Predictive models, like Logistic Regression, show AI's potential to boost academic success and teaching effectiveness.
+     Financial Inclusion: Examines financial access in East Africa, where innovations like mobile money have expanded services. However, gaps remain for marginalized groups. Data analysis identifies digital payments and technology as key drivers, calling for targeted interventions to promote equity.
+     In summary, this report highlights how data-driven approaches can transform understanding of human behavior, improve education, and advance financial inclusion, offering actionable insights for progress.
+keywords: 
+  - Sentiment Analysis
+  - AI in Education
+  - Financial Inclusion
+journal: "Systematic Reviews"
+date: "`r Sys.Date()`"
+linenumbers: false
+numbersections: true
+bibliography: FinalExams.bib
+biblio-style: apalike  # Author-year style for natbib
+classoption: preprint, 3p, authoryear
+output: 
+  rticles::elsevier_article:
+    keep_tex: true
+    citation_package: natbib
+---
+
+```{r setup, include=FALSE, message=FALSE,warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Load Packages
+pacman::p_load(officedown,officer,flexdashboard,openxlsx,readxl,zoo,data.table,dplyr,likert,plyr,
+               RColorBrewer,ggplot2,fuzzyjoin,matrixStats,flextable,vtree,DT,shiny,shinythemes,
+               plotly,sjmisc,sjPlot,stringr,reticulate)
+
+
+use_python("C:/Users/LENOVO/AppData/Local/Programs/Python/Python311/python.exe")
+
+```
+
+
+# Theme 2: Human Behaviour - Sentimental Analysis / Natural Language processing of human text and opinions
+
+## Introduction
+
+The growth of digital content creation and social media has led to an unprecedented increase in unstructured text data. Every day, people express their thoughts and opinions through reviews, comments, and feedback, generating vast amounts of user-generated content [@liu2012sentiment]. This data holds valuable insights into human emotions, preferences, and behaviors. Sentiment analysis has emerged as a powerful tool for understanding these emotions [@pang2008opinion]. By analyzing text, it helps uncover the underlying feelings and thoughts people express. The ability to extract sentiment from unstructured data provides meaningful insights, making it indispensable for businesses, researchers, and anyone seeking to build a deeper connection with their audience [@cambria2013new].
+
+As one of the world’s largest e-commerce platforms, Amazon receives a constant stream of customer feedback from product reviews to service ratings [@hu2004mining]. This wealth of user-generated content holds valuable insights into consumer sentiment, shedding light on what people love, what frustrates them, and what they expect from their shopping experiences. By applying Sentiment Analysis to Amazon’s customer feedback, we can uncover meaningful patterns in consumer behavior [@zhang2018deep]. These insights go beyond just understanding customer satisfaction and product preferences; they can also reveal potential areas for improvement and even broader societal trends, such as how online shopping impacts mental well-being and social dynamics.
+
+
+```{python, echo=FALSE}
+## Step 1: Load necessary libraries
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import re
+import nltk
+import wordcloud
+import spacy
+
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from wordcloud import WordCloud
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+```
+
+
+
+```{python, echo=FALSE, tidy=TRUE, width=80}
+## Import data sets (Link to data set: https://archive.ics.uci.edu/dataset/331/sentiment+labelled+sentences)
+file_path = r"c:\Users\LENOVO\Desktop\DSA Masters\Data Science Lifecycle\Final Exams\sentiment labelled sentences\amazon_cells_labelled.txt"
+
+df = pd.read_csv(file_path, delimiter = '\t', header = None, names = ['Text','Sentiment'])
+
+```
+
+
+```{python, echo=FALSE}
+
+## Data preprocessing
+import re
+from gensim.parsing.preprocessing import remove_stopwords
+
+
+# Define the preprocessing function
+def preprocess_text(text):
+    # Convert to lowercase
+    text = text.lower()
+    
+    # Remove special characters and extra spaces
+    text = re.sub(r'\W', ' ', text)  # Remove special characters
+    text = re.sub(r'\s+', ' ', text).strip()  # Remove extra spaces
+    
+    # Remove stopwords using Gensim's remove_stopwords function
+    text = remove_stopwords(text)
+    
+    # Remove words with fewer than 3 letters
+    words = text.split()  # Split text into words
+    words = [word for word in words if len(word) >= 3]  # Keep words with 3 or more letters
+    text = " ".join(words)  # Join words back into a single string
+    
+    return text
+
+# Apply the preprocessing function to the 'Text' column
+df['cleaned'] = df['Text'].apply(preprocess_text)
+
+
+```
+
+
+## Methodology
+
+The analysis followed a structured approach, incorporating data collection, preprocessing, exploratory analysis, and modeling to extract insights from Amazon customer reviews.
+
+* **Data Collection and Pre-processing:** Sentiment-labeled data set containing customer feedback was obtained from the  UC Irvine Machine Learning Repository and imported into python for analysis. The text data underwent pre-processing, where it was converted to lowercase, special characters, stop-words, and short words were removed. This enhanced the relevance of the data and allowed for more accurate analysis.
+
+* **Exploratory Data Analysis:**In the exploratory data analysis phase, we examined the sentiment distribution, revealing an even split between positive and negative reviews. A word frequency analysis was conducted to identify key themes in customer feedback. Words such as "phone," "great," and "good" were frequently mentioned, highlighting common sentiments. A word cloud visualization was created to graphically represent the most common terms, focusing on product quality and usability.
+
+* **Sentiment Classification:** For sentiment classification, we applied TF-IDF vectorization to convert text data into numerical format. A Naïve Bayes classifier was then trained to predict sentiment, and the model was evaluated using accuracy scores, classification reports, and a confusion matrix. We also validated the model with hypothetical test samples, demonstrating its ability to predict sentiment.
+
+* **Unsupervised Learning (Clustering):** To provide an unsupervised perspective, we implemented K-Means clustering, grouping the reviews into two sentiment-based clusters. This clustering approach helped us explore sentiment trends in the data without predefined labels.
+
+
+## Findings
+
+```{python, echo=FALSE}
+### Text Frequency Distribution
+word_freq = pd.Series(" ".join(df['cleaned']).split()).value_counts()
+# print(word_freq[:10])
+
+```
+
+### Sentiment Distribution
+
+The sentiment analysis reveals a perfectly balanced distribution between positive and negative feedback. Out of the total dataset, 500 reviews (50%) express negative sentiment (Sentiment = 0), while 500 reviews (50%) convey positive sentiment (Sentiment = 1). This even split suggests a diverse range of customer experiences, with equal representation of satisfaction and dissatisfaction.
+
+```{python, echo=FALSE, fig.align='center', out.width="70%"}
+
+
+plt.figure(figsize=(3, 2))
+sns.countplot(x=df['Sentiment'], palette="viridis")
+plt.title("Sentiment Distribution")
+plt.xlabel("Sentiment (0: Negative, 1: Positive)")
+plt.ylabel("Count")
+plt.show()
+
+```
+
+
+### Word Cloud Visualization
+
+The text analysis reveals key themes in customer feedback, with "phone" being the most frequently mentioned word, appearing 168 times. This suggests that many reviews focus on mobile devices, likely discussing their performance, features, or overall satisfaction. The words "great" (99) and "good" (77) indicate a generally positive sentiment, implying that customers are largely satisfied with their purchases. "Product" (55) and "quality" (49) further reinforce this, highlighting that shoppers often comment on the overall value and craftsmanship of their items. Specific mentions of "headset" (48), "battery" (46), and "sound" (43) suggest that many reviews relate to audio devices, possibly wireless headphones or earphones. The frequent appearance of "works" (47) implies that customers often evaluate whether the product functions as expected. Additionally, "use" (41) indicates that usability is an important factor in customer experiences. Overall, the feedback suggests that customers are generally pleased with the quality and performance of their purchases, particularly in relation to phones and audio accessories.
+
+```{python, echo=FALSE,message=FALSE, fig.align='center', out.width="70%"}
+
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+
+# Generate the word cloud
+wordcloud = WordCloud(width=800, height=400, background_color='white').generate(" ".join(df['cleaned']))
+
+# Create the figure without printing the size in the document
+plt.figure(figsize=(10, 5))
+
+# Display the word cloud
+plt.imshow(wordcloud, interpolation="bilinear")
+plt.axis("off")  # Hide axes
+
+# Add a title
+plt.title("Most Common Words in Reviews", fontsize=16, pad=20)
+
+# Adjust layout to prevent clipping
+plt.tight_layout()
+
+# Suppress the output explicitly and show the plot
+plt.show()
+
+
+```
+
+
+
+## Build, Evaluate and Optimize models
+
+#### Model Evaluation
+
+The model demonstrates a solid performance with an overall accuracy of 81%, correctly predicting the class in 81% of the cases. It performs well across both classes, with Class 1 showing slightly better results. For Class 0, the model achieves a precision of 82% and a recall of 75%, indicating that it correctly identifies 82% of the predicted Class 0 instances, though it misses about 25% of actual Class 0 instances. For Class 1, precision stands at 80%, and recall is higher at 86%, meaning it identifies 86% of the true Class 1 instances but with a slightly lower precision. The F1-scores are balanced for both classes, with 0.79 for Class 0 and 0.83 for Class 1, reflecting a strong trade-off between precision and recall. The model's performance is consistent across both classes, as indicated by the macro and weighted averages of 81% for precision, recall, and F1-score, showing a well-rounded and effective classification model.
+
+```{python, echo=FALSE}
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.metrics import accuracy_score, classification_report
+from tabulate import tabulate
+import pandas as pd
+
+# Assuming `df` is already defined and contains 'cleaned' and 'Sentiment' columns
+
+# Vectorize the text data
+vectorizer = TfidfVectorizer(max_features=2000)
+X = vectorizer.fit_transform(df['cleaned'])
+y = df['Sentiment']
+
+# Split into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train the model
+model = MultinomialNB()
+model.fit(X_train, y_train)
+
+# Make predictions
+y_pred = model.predict(X_test)
+
+# Calculate accuracy
+accuracy = accuracy_score(y_test, y_pred)
+
+# Generate classification report
+report = classification_report(y_test, y_pred, output_dict=True)
+
+# Convert classification report to a DataFrame for better formatting
+report_df = pd.DataFrame(report).transpose()
+
+# Format all numerical values in the report to two decimal places
+report_df = report_df.applymap(lambda x: round(x, 2) if isinstance(x, (int, float)) else x)
+
+# Print organized output
+print("=" * 50)
+print("Model Evaluation Metrics")
+print("=" * 50)
+print(f"Accuracy Score: {accuracy:.2f}\n")  # Print accuracy with two decimal places
+
+# Print classification report in a tabular format
+print("Classification Report:")
+print(tabulate(report_df, headers='keys', tablefmt='pretty', floatfmt=".2f"))
+print("=" * 50)
+
+```
+
+
+
+
+
+##### Confusion Matrix
+
+The confusion matrix reveals how well the model predicts Negative and Positive cases. The model correctly identified 70 Negative cases and 92 Positive cases. However, it incorrectly predicted 23 Negative cases as Positive and 15 Positive cases as Negative. Overall, the model performs well, but there is room for improvement, particularly in reducing the number of False Positives and False Negatives.
+
+
+```{python, echo=FALSE,message=FALSE, fig.align='center', out.width="70%"}
+
+plt.figure(figsize=(5, 4))
+sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt="d", cmap="Blues", xticklabels=["Negative", "Positive"], yticklabels=["Negative", "Positive"])
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.title("Confusion Matrix")
+plt.show()
+
+```
+
+
+\newpage
+
+
+# Theme 4: Education: Artificial Intelligence (AI) in Higher Education
+
+## Introduction
+
+Education is a key driver of national development, and improving the quality of higher education is essential for progress. One way to achieve this is by using faster methods to assess student performance and teaching effectiveness. Traditional assessment methods can be slow and limited [@bennett2011formative], but Artificial Intelligence (AI) offers a promising solution [@luckin2016intelligence]. AI can analyze large amounts of data quickly and identify patterns that can help improve both teaching methods and student outcomes [@baker2014educational]. In higher education, machine learning algorithms, a type of AI, can be used to classify student performance and evaluate teaching approaches. By analyzing data from student assessments and other academic activities, these algorithms can provide valuable insights. The goal of this study is to find the most effective approach for improving student performance.
+
+
+## Methodology
+
+This study aims to predict student performance, specifically determining whether a student will pass or fail based on various factors. The process involved several key steps, including data collection, preprocessing, exploratory analysis, model building, evaluation, and validation.
+
+* **Data Collection and Preprocessing:** The dataset used in the study contains various student characteristics such as their previous grades, study time, age, and alcohol consumption (both on weekdays and weekends). In the preprocessing stage, categorical variables like whether a student wants to pursue higher education were converted into numeric values using label encoding. Additionally, the target variable, the final grade (denoted as G3), was transformed into a binary classification problem. If a student’s final grade was 10 or more, they were considered to have "passed" (label 1), while those with grades below 10 were categorized as "fail" (label 0).
+
+* **Exploratory Data Analysis:** Following preprocessing, an in-depth analysis of the data was conducted to understand the relationships between different variables and their impact on student performance. Histograms and box plots were created to visually examine the distribution of grades and to highlight the study time’s influence on the final grade. A correlation matrix was also generated to identify the factors most closely related to student performance. This analysis revealed that previous grades and study time were the most significant predictors of final performance.
+
+* **Model Building:** In the next phase, various features were selected for use in the predictive model. The selected features included previous grades, weekly study time, the number of past class failures, and other factors like age, and alcohol consumption. The dataset was split into training and testing sets to ensure an unbiased evaluation of the models. Three different machine learning algorithms were applied: Logistic Regression, Random Forest, and Gradient Boosting. These models were trained using the training dataset, and their performance was evaluated on the testing set.
+
+* **Model Evaluation:** The models were evaluated based on their accuracy, precision, recall, and F1-score. Logistic Regression provided the best overall performance, as it showed the highest accuracy in predicting whether a student would pass or fail. Random Forest and Gradient Boosting also performed well but did not outperform Logistic Regression in this study. Based on these results, Logistic Regression was selected as the best model for predicting student performance.
+
+* **Validation:** To validate the effectiveness of the model, a sample student's data was used to predict their final grade. The student’s characteristics—such as age, study time, and alcohol consumption—were input into the trained Logistic Regression model, which predicted whether they would pass or fail. This validation step confirmed the model's capability to make accurate predictions based on the input features.
+
+## Findings
+
+
+
+```{python, echo = FALSE}
+
+# STEP 1: IMPORT NECESSARY LIBRARIES
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+# STEP 2: READ IN THE DATA SETS
+# Fetch the dataset
+from ucimlrepo import fetch_ucirepo
+student_performance = fetch_ucirepo(id=320)
+
+# Data (as pandas dataframes)
+X = student_performance.data.features
+y = student_performance.data.targets
+
+# Combine features and target for easier manipulation
+df = pd.concat([X, y], axis=1)
+
+
+# STEP 3: DATA PREPROCESSING
+
+# Convert categorical variables to numeric using Label Encoding
+categorical_columns = df.select_dtypes(include=['object', 'category']).columns.tolist()
+label_encoders = {}
+for col in categorical_columns:
+    le = LabelEncoder()
+    df[col] = le.fit_transform(df[col])
+    label_encoders[col] = le
+
+# Define target variable (Final grade)
+# Convert G3 to a binary classification problem: Pass (1) if Final_Grade >= 10, Fail (0) otherwise
+df['G3'] = df['G3'].apply(lambda x: 1 if x >= 10 else 0)
+
+
+```
+
+### Historical student performance
+
+The distribution of final grades (G3) reveals that most students pass their final exams.Out of 649 students, 549 (84.6%) passed and 100 (15.4%) failed, indicating a generally high pass rate. 
+
+```{python, echo=FALSE,message=FALSE, fig.align='center', out.width="70%"}
+
+# a. Analyze historical student performance
+plt.figure(figsize=(5, 2.5))
+sns.histplot(df['G3'], kde=True, bins=20)
+plt.title('Distribution of Final Grades (G3)')
+plt.xlabel('Final Grade (G3)')
+plt.ylabel('Frequency')
+plt.show()
+
+
+```
+
+### Average study time vs Final Grade
+
+The average study time for students reveals a notable difference between those who passed and those who failed. Students who passed (G3 = 1) spent an average of 1.99 hours per week studying, while those who failed (G3 = 0) averaged only 1.61 hours per week. This indicates a positive correlation between study time and academic performance, suggesting that increased study time contributes to better outcomes. 
+
+```{python, echo=FALSE,message=FALSE, fig.align='center', out.width="70%"}
+
+# b. Highlight high-performing and low-performing students
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Create the boxplot
+plt.figure(figsize=(5, 2.5))
+ax = sns.boxplot(x='G3', y='studytime', data=df)
+
+# Calculate and annotate mean study time for each G3 grade
+means = df.groupby('G3')['studytime'].mean()
+for i, mean in enumerate(means):
+    ax.text(i, mean, f'{mean:.2f}', ha='center', va='bottom', fontsize=10, color='black', fontweight='bold')
+
+# Add title and labels
+plt.title('Study Time vs Final Grade (G3)')
+plt.xlabel('Final Grade (G3)')
+plt.ylabel('Study Time')
+
+# Show the plot
+plt.show()
+
+
+```
+
+### Predictors of Final Grade
+
+The correlation analysis reveals that the strongest predictors of final grades (G3) are early academic performance (G1 and G2) and aspirations for higher education (higher), both showing significant positive correlations. Moderate positive correlations exist for study time and parental education, suggesting their supportive role in academic success. Conversely, past failures, alcohol consumption, and absences have strong negative correlations, indicating they are major barriers to performance. 
+Factors like family support, extracurricular activities, and guardian type have minimal impact on grades. 
+
+```{python, echo=FALSE, message=FALSE, fig.align='center', out.width="70%"}
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import textwrap
+
+# c. Identify variables that affect student performance
+
+# Exclude non-numeric columns when calculating the correlation matrix
+correlation_matrix = df.select_dtypes(include=[np.number]).corr()
+
+# Filter correlations to only include variables with correlation >= 0.1 with 'G3'
+filtered_correlations = correlation_matrix[['G3']].loc[
+    correlation_matrix['G3'].abs() >= 0.1
+].sort_values(by='G3', ascending=False)
+
+# Set up figure size dynamically based on the number of variables
+plt.figure(figsize=(10, len(filtered_correlations) * 0.5))
+
+# Create heatmap
+ax = sns.heatmap(filtered_correlations, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5, cbar=True)
+
+# Wrap y-axis labels to prevent truncation
+wrapped_labels = [textwrap.fill(label, width=30) for label in filtered_correlations.index]
+ax.set_yticklabels(wrapped_labels, rotation=0, fontsize=10)
+
+# Adjust x-axis labels
+plt.xticks(rotation=0, fontsize=12)
+
+plt.title('Correlation with Final Grade (G3) (>= 0.1)', fontsize=14, pad=10)
+plt.xlabel('')
+plt.ylabel('')
+
+plt.tight_layout()  # Ensures everything fits well
+plt.show()
+
+```
+
+
+```{python, echo=FALSE}
+
+# STEP 5: BUILD AND EVALUATE MODELS
+
+# Select the variables that correlate with G3
+selected_features = ['G1', # first period grade (numeric: from 0 to 20)
+                     'G2', # second period grade (numeric: from 0 to 20)
+                     'G3', # final grade (numeric: from 0 to 20, output target)
+                     'age', # student's age (numeric: from 15 to 22)
+                     'studytime', # weekly study time (numeric: 1 - <2 hours, 2 - 2 to 5 hours, 3 - 5 to 10 hours, or 4 - >10 hours)
+                     'failures', #number of past class failures (numeric: n if 1<=n<3, else 4)
+                     'higher', # wants to take higher education (binary: yes or no)
+                     'Dalc', # workday alcohol consumption (numeric: from 1 - very low to 5 - very high)
+                     'Walc', # weekend alcohol consumption (numeric: from 1 - very low to 5 - very high)
+                     ]  
+
+df = df[selected_features]
+
+# Split into features (X) and target (y)
+X = df.drop(columns=['G1', 'G2', 'G3'])  # Drop intermediate grades to avoid data leakage
+y = df['G3']
+
+# Split into Training and Testing Sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Standardize Numerical Features
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+
+```
+
+
+### Selected Models
+
+#### Model 1: Logistic Regression
+\
+The logistic regression model achieved an overall accuracy of 89.2%. The model performs exceptionally well in predicting class 1, with a precision of 92%, a recall of 97%, and an F1-score of 94%, based on 115 instances. However, its performance in predicting class 0 is weaker, with a precision of 56%, a recall of 33%, and an F1-score of 42%, based on 15 instances. The macro average F1-score is 68%, reflecting the imbalance in class performance, while the weighted average F1-score of 88% indicates strong overall predictive capability.
+
+```{python, echo = FALSE}
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report
+from tabulate import tabulate
+import pandas as pd
+
+# Train Logistic Regression model
+lr = LogisticRegression(random_state=42)
+lr.fit(X_train, y_train)
+y_pred_lr = lr.predict(X_test)
+
+# Calculate accuracy
+accuracy = accuracy_score(y_test, y_pred_lr)
+
+# Generate classification report
+report = classification_report(y_test, y_pred_lr, output_dict=True)
+
+# Convert classification report to a DataFrame for better formatting
+report_df = pd.DataFrame(report).transpose()
+
+# Format all numerical values in the report to two decimal places
+report_df = report_df.applymap(lambda x: round(x, 2) if isinstance(x, (int, float)) else x)
+
+# Print organized output
+print("=" * 50)
+print("Logistic Regression Evaluation Metrics")
+print("=" * 50)
+print(f"Accuracy Score: {accuracy:.2f}\n")  # Print accuracy with two decimal places
+
+# Print classification report in a tabular format
+print("Classification Report:")
+print(tabulate(report_df, headers='keys', tablefmt='pretty', floatfmt=".2f"))
+print("=" * 50)
+
+
+```
+
+#### Model 2: Random Forest Classifier
+\
+The Random Forest model achieved an overall accuracy of 84.6%. The model performs well in predicting class 1, with a precision of 91%, a recall of 92%, and an F1-score of 91%, based on 115 instances. However, its performance in predicting class 0 is considerably lower, with a precision of 31%, a recall of 27%, and an F1-score of 29%, based on 15 instances. The macro average F1-score of 60% highlights this class imbalance, while the weighted average F1-score of 84% suggests strong overall predictive ability, driven mainly by class 1 performance.
+
+```{python, echo = FALSE}
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
+from tabulate import tabulate
+import pandas as pd
+
+# Train Random Forest model
+rf = RandomForestClassifier(random_state=42)
+rf.fit(X_train, y_train)
+y_pred_rf = rf.predict(X_test)
+
+# Calculate accuracy
+accuracy = accuracy_score(y_test, y_pred_rf)
+
+# Generate classification report
+report = classification_report(y_test, y_pred_rf, output_dict=True)
+
+# Convert classification report to a DataFrame for better formatting
+report_df = pd.DataFrame(report).transpose()
+
+# Format all numerical values in the report to two decimal places
+report_df = report_df.applymap(lambda x: round(x, 2) if isinstance(x, (int, float)) else x)
+
+# Print organized output
+print("=" * 50)
+print("Random Forest Evaluation Metrics")
+print("=" * 50)
+print(f"Accuracy Score: {accuracy:.2f}\n")  # Print accuracy with two decimal places
+
+# Print classification report in a tabular format
+print("Classification Report:")
+print(tabulate(report_df, headers='keys', tablefmt='pretty', floatfmt=".2f"))
+print("=" * 50)
+
+```
+
+#### Model 3: Gradient Boosting Classifier
+\
+The Gradient Boosting model achieved an overall accuracy of 85.4%. It performed well in predicting class 1, with a precision of 92%, a recall of 91%, and an F1-score of 92%, based on 115 instances. For class 0, the model showed moderate performance, with a precision of 38%, a recall of 40%, and an F1-score of 39%, based on 15 instances. The macro average F1-score of 65% reflects this disparity, while the weighted average F1-score of 86% indicates that the model maintains strong overall predictive performance, primarily driven by class 1.
+
+```{python, echo = FALSE}
+
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.metrics import accuracy_score, classification_report
+from tabulate import tabulate
+import pandas as pd
+
+# Train Gradient Boosting model
+gb = GradientBoostingClassifier(random_state=42)
+gb.fit(X_train, y_train)
+y_pred_gb = gb.predict(X_test)
+
+# Calculate accuracy
+accuracy = accuracy_score(y_test, y_pred_gb)
+
+# Generate classification report
+report = classification_report(y_test, y_pred_gb, output_dict=True)
+
+# Convert classification report to a DataFrame for better formatting
+report_df = pd.DataFrame(report).transpose()
+
+# Format all numerical values in the report to two decimal places
+report_df = report_df.applymap(lambda x: round(x, 2) if isinstance(x, (int, float)) else x)
+
+# Print organized output
+print("=" * 50)
+print("Gradient Boosting Evaluation Metrics")
+print("=" * 50)
+print(f"Accuracy Score: {accuracy:.2f}\n")  # Print accuracy with two decimal places
+
+# Print classification report in a tabular format
+print("Classification Report:")
+print(tabulate(report_df, headers='keys', tablefmt='pretty', floatfmt=".2f"))
+print("=" * 50)
+
+```
+
+
+#### Model performance comparison
+\
+The Logistic Regression model is the recommended choice, achieving the highest accuracy of 89.2%. It demonstrated strong performance in predicting class 1, with a precision of 92%, a recall of 97%, and an F1-score of 94%, based on 115 instances. Although its performance for class 0 was lower (precision: 56%, recall: 33%, F1-score: 42% for 15 instances), the overall weighted F1-score of 88% indicates robust predictive ability. Given its superior accuracy and balanced performance, Logistic Regression is the most reliable model for this classification task.
+
+```{python, echo = FALSE}
+
+
+model_results = {
+    'Logistic Regression Results': accuracy_score(y_test, y_pred_lr),
+    'Random Forest Results': accuracy_score(y_test, y_pred_rf),
+    'Gradient Boosting Results': accuracy_score(y_test, y_pred_gb)
+}
+
+best_model = max(model_results, key=model_results.get)
+print(f"\nRecommended Model: {best_model} with Accuracy: {model_results[best_model]}")
+
+
+```
+
+### Model Validation
+
+For a 31-year-old student who studies 5 to 10 hours per week, has no record of past failures, aspires to pursue higher education, and consumes alcohol once on weekdays and twice on weekends, the trained Logistic Regression model predicted a pass. This outcome aligns with expectations, as the student's consistent study habits, lack of academic failures, and motivation for higher education are strong indicators of academic success.
+
+```{python, echo=FALSE}
+# STEP 5: VALIDATE MODEL
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+
+# Sample data for one person
+sample_data = {
+    'age': [31],  # Student's age
+    'studytime': [3],  # Weekly study time (1 - <2 hours, 2 - 2 to 5 hours, 3 - 5 to 10 hours, 4 - >10 hours)
+    'failures': [0],  # Number of past class failures
+    'higher': ['yes'],  # Wants to take higher education (yes or no)
+    'Dalc': [1],  # Workday alcohol consumption (1 - very low to 5 - very high)
+    'Walc': [2],  # Weekend alcohol consumption (1 - very low to 5 - very high)
+}
+
+# Convert sample data to DataFrame
+sample_df = pd.DataFrame(sample_data)
+
+# Convert 'higher' column to binary (yes -> 1, no -> 0)
+sample_df['higher'] = sample_df['higher'].map({'yes': 1, 'no': 0})
+
+# Standardize the sample data using the same scaler used for training
+sample_X = scaler.transform(sample_df)
+
+# Predict using the trained Logistic Regression model
+predicted_grade = lr.predict(sample_X)
+
+# Display the prediction
+print(f"Predicted Final Grade (G3) for the student: {predicted_grade[0]}")
+
+```
+
+# Theme 3: : Finance- Financial Access and Inclusion
+
+## Introduction
+
+Financial access and inclusion are critical drivers of economic growth and poverty reduction. Across Africa, the expansion of credit, funding opportunities, and digital financial platforms—such as mobile money—has significantly improved financial access [@suri2016long]. These innovations have facilitated transactions, savings, and credit acquisition for millions, promoting financial empowerment and economic participation. However, despite these advancements, financial inclusion remains uneven, with marginalized groups such as women, the elderly, and rural populations facing persistent barriers to access [@allen2016african]. Socioeconomic disparities, limited financial literacy, inadequate infrastructure, and restrictive financial policies contribute to their exclusion, limiting their ability to fully benefit from financial services. This analysis seeks to examine financial access and service usage data to identify existing gaps and inequalities. By understanding these disparities, targeted interventions can be proposed to enhance inclusivity and ensure that financial systems cater to all, fostering equitable economic development.
+
+## Methodology
+
+The methodology employed in this analysis is designed to comprehensively evaluate financial inclusion across East African countries (Burundi, Kenya, Rwanda, Tanzania, and Uganda) using a structured, data-driven approach. 
+
+* **Data Preparation:** The analysis began with loading the dataset (DatabankWide.xlsx) and selecting relevant variables that capture key dimensions of financial inclusion, such as account ownership, access to financial services, usage patterns, and socio-economic dynamics. The dataset is filtered to focus on East African countries, ensuring the analysis is region-specific. Missing values are addressed using a systematic imputation strategy: numeric variables are filled with the mean or median (depending on skewness), while categorical variables are filled with the mode. This ensures the dataset is complete and ready for analysis. To handle categorical variables, a combination of Label Encoding and One-Hot Encoding were applied. 
+
+* **Exploratory Data Analysis (EDA):**The EDA phase focused on understanding the relationships between variables and identifying key drivers of financial inclusion. A correlation analysis was conducted to determine which variables have the strongest association with the Financial Inclusion Index (FII). Variables with a correlation coefficient of 0.5 or higher were identified as significant contributors to financial inclusion. Visualizations, such as heatmaps and box plots, were used to explore the distribution of financial service usage and access across different demographics (e.g., gender, labor force status) and socio-economic dynamics (e.g., digital payments, savings behavior). 
+
+* **Feature Engineering:** To quantify financial inclusion, a Financial Inclusion Index (FII) was constructed using weighted scores for three dimensions:
+
+i. **Ownership:** To measure account and card ownership.
+ii. **Access:** As proxies of access to financial services using account and card ownership data.
+iii. **Usage:** To evaluates the active use of financial services, such as making deposits or using debit/credit cards.
+
+Each dimension was weighted (ownership: 40%, access: 30%, usage: 30%) to reflect its relative importance. The FII was then calculated as a composite score scaled to 0–100, providing a standardized metric for comparing financial inclusion across countries and demographics.
+
+* **Predictive Modeling:** The analysis employs machine learning to predict the Financial Inclusion Index based on the identified significant variables. Five regression models are evaluated: Linear Regression,
+Random Forest Regressor, Gradient Boosting Regressor, Support Vector Regressor (SVR), K-Nearest Neighbors Regressor (KNN). Each model was trained on 80% of the data and evaluated on the remaining 20%. Performance metrics such as Mean Absolute Error (MAE), Mean Squared Error (MSE), and R-squared (R²) were used to compare the models. The Linear Regression model was selected for further validation due to its interpretability and competitive performance.
+
+* **Model Evaluation and Interpretation:** The Linear Regression model was validated using 5-fold cross-validation to confirms its consistency across different subsets of the data. The model's coefficients were interpreted to understand the impact of each feature on the Financial Inclusion Index. For example: Positive coefficients indicate that higher values of the feature (e.g., digital payments, savings behavior) are associated with increased financial inclusion. Negative coefficients suggest that certain factors (e.g., inactive accounts) may hinder financial inclusion. Finally, the model was used to make predictions on the test set, and its performance is evaluated using MAE, MSE, and R². The results demonstrate that the model provides a reliable estimate of financial inclusion, with an R² value indicating a strong fit to the data.
+
+
+
+```{python, echo=FALSE,warning=FALSE}
+# load necessary libraries
+import pandas as pd
+import openpyxl
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+
+# Step 1: Import Data set and select relevant variables to work with
+
+file_path = r"c:\Users\LENOVO\Desktop\DSA Masters\Data Science Lifecycle\Final Exams\Financial Inclusion\DatabankWide.xlsx"
+data = pd.read_excel(file_path)
+
+
+# Select relevant columns for financial access and inclusion analysis
+selected_columns = [
+    'Country name', 'Country code', 'Year','Adult populaiton','Income group',
+    
+    'Account (% age 15+)', # Owns a bank account or mobile money account
+    
+    'Owns a debit or credit card (% age 15+)',
+    'Used a debit or credit card (% age 15+)',
+    'Made a deposit (% with a financial institution account, age 15+)',
+    'Has an inactive account (% age 15+)',
+  
+    'Use a mobile money account two or more times a month (% age 15+)',
+    'Saved any money (% age 15+)',
+    
+    'Saved at a financial institution or using a mobile money account (% age 15+)',
+    'Borrowed any money from a formal financial institution or using a mobile money account (% age 15+)',
+      
+    'Made or received a digital payment (% age 15+)',
+    
+    'Own a mobile phone (% age 15+)',
+    'Has access to the internet (% age 15+)',
+    
+    'Account, rural (% age 15+)',
+    'Account, urban (% age 15+)',
+    
+    'Account, out of labor force (% age 15+)',
+    'Account, in labor force (% age 15+)',
+    
+    'Owns a debit or credit card, female (% age 15+)',	
+    'Owns a debit or credit card, male (% age 15+)',	
+        
+    'Saved any money, female (% age 15+)',	
+    'Saved any money, male (% age 15+)',
+    
+    'Saved for education or school fees, female (% age 15+)',	
+    'Saved for education or school fees, male (% age 15+)',	
+    
+    'Saved for old age, female (% age 15+)',	
+    'Saved for old age, male (% age 15+)',	
+    
+    'Saved to start, operate, or expand a farm or business, female (% age 15+)',	
+    'Saved to start, operate, or expand a farm or business, male (% age 15+)',
+    
+    'Saved using a savings club or a person outside the family, female (% age 15+)',	
+    'Saved using a savings club or a person outside the family, male (% age 15+)',
+    
+    'Borrowed any money, female (% age 15+)',	
+    'Borrowed any money, male (% age 15+)',
+    
+    'Borrowed from a formal financial institution, female (% age 15+)',	
+    'Borrowed from a formal financial institution, male (% age 15+)',
+    
+    'Borrowed from a savings club, female (% age 15+)',
+    'Borrowed from a savings club, male (% age 15+)',
+    
+    'Borrowed from a store by buying on credit, female (% age 15+)',	
+    'Borrowed from a store by buying on credit, male (% age 15+)',
+    
+    'Borrowed from family or friends, female (% age 15+)',	
+    'Borrowed from family or friends, male (% age 15+)',
+
+    'Borrowed for education or school fees, female (% age 15+)',	
+    'Borrowed for education or school fees, male (% age 15+)',
+    
+    'Borrowed for health or medical purposes, female (% age 15+)',	
+    'Borrowed for health or medical purposes, male (% age 15+)',
+    
+    'Borrowed to start, operate, or expand a farm or business, female (% age 15+)',	
+    'Borrowed to start, operate, or expand a farm or business, male (% age 15+)',
+    
+    'Has an outstanding housing loan, female (% age 15+)',	
+    'Has an outstanding housing loan, male (% age 15+)'
+   
+]
+
+# Filter the dataset with selected columns
+data = data[selected_columns]
+
+east_african_countries = ["Burundi","Kenya","Rwanda","Tanzania","Uganda"]
+
+# Assume the dataframe is named 'data' and the column containing country names is 'Country'
+data = data[data['Country name'].isin(east_african_countries)]
+
+
+# Step 2: Data preprocessing
+
+# Function to impute missing values
+def impute_missing_values(data):
+    for col in data.columns:
+        if data[col].dtype in ['int64', 'float64']:  # Numeric variables
+            if data[col].skew() > 1 or data[col].skew() < -1:  # If highly skewed, use median
+                data[col].fillna(data[col].median(), inplace=True)
+            else:  # Otherwise, use mean
+                data[col].fillna(data[col].mean(), inplace=True)
+        else:  # Categorical variables
+            data[col].fillna(data[col].mode()[0], inplace=True)
+    return data
+
+data = impute_missing_values(data)
+
+
+# Encode Categorical Variables
+from sklearn.preprocessing import LabelEncoder
+import pandas as pd
+
+def encode_categorical_variables(data, one_hot_threshold=10):
+    encoded_data = data.copy()  # Copy data to avoid modifying original dataset
+    label_encoders = {}  # Store label encoders for decoding later
+    
+    # Iterate through categorical columns, excluding 'Country name'
+    for col in encoded_data.select_dtypes(include=['object', 'category']).columns:
+        if col == 'Country name':
+            continue  # Skip encoding for 'Country name'
+        
+        unique_values = encoded_data[col].nunique()
+        
+        if unique_values <= one_hot_threshold:
+            # Apply Label Encoding
+            le = LabelEncoder()
+            encoded_data[col] = le.fit_transform(encoded_data[col])
+            label_encoders[col] = le  # Store encoder
+        else:
+            # Apply One-Hot Encoding
+            encoded_df = pd.get_dummies(encoded_data[col], prefix=col, drop_first=True)
+            encoded_data = pd.concat([encoded_data.drop(columns=[col]), encoded_df], axis=1)
+    
+    return encoded_data, label_encoders  # Return encoded data and encoders for decoding
+
+# Unpack the returned values into separate variables
+encoded_data, label_encoders = encode_categorical_variables(data)
+
+
+data = encoded_data
+
+# Feature engineering
+data['Has an active Account (% age 15+)'] = data['Account (% age 15+)'] - data['Has an inactive account (% age 15+)']
+
+# Ensure active accounts do not exceed 100% or go below 0%
+data['Has an active Account (% age 15+)'] = data['Has an active Account (% age 15+)'].clip(0, 100)
+
+# Define weights for each dimension
+weights = {
+    'ownership': 0.4,  # Weight for ownership
+    'access': 0.3,  # Weight for access
+    'usage': 0.3,  # Weight for usage
+}
+
+# Calculate dimension scores
+# Ownership Score
+data['ownership_score'] = (
+    data['Account (% age 15+)'] * 0.5 +  # Weight for account ownership
+    data['Owns a debit or credit card (% age 15+)'] * 0.3 +  # Weight for card ownership
+    data['Has an active Account (% age 15+)'] * 0.2  # Weight for active accounts
+) * weights['ownership']
+
+# Access Score
+# Since we don't have direct access variables, we can use ownership variables as proxies
+data['access_score'] = (
+    data['Account (% age 15+)'] * 0.6 +  # Proxy for access via account ownership
+    data['Owns a debit or credit card (% age 15+)'] * 0.4  # Proxy for access via card ownership
+) * weights['access']
+
+# Usage Score
+data['usage_score'] = (
+    data['Used a debit or credit card (% age 15+)'] * 0.4 +  # Weight for card usage
+    data['Made a deposit (% with a financial institution account, age 15+)'] * 0.4 +  # Weight for deposits
+    data['Has an active Account (% age 15+)'] * 0.2  # Weight for active accounts
+) * weights['usage']
+
+# Calculate the Financial Inclusion Index (FII)
+data['financial_inclusion_index'] = (
+    data['ownership_score'] +
+    data['access_score'] +
+    data['usage_score']
+) * 100  # Scale to 0-100
+
+# Exclude columns used to calculate financial inclusion index
+exclude_columns = [
+    'Account (% age 15+)', 
+    'Owns a debit or credit card (% age 15+)',
+    'Used a debit or credit card (% age 15+)',
+    'Made a deposit (% with a financial institution account, age 15+)',
+    'Has an inactive account (% age 15+)',
+    'ownership_score',
+    'access_score',
+    'usage_score'
+]
+
+# Drop the specified columns from the DataFrame
+data = data.drop(columns=exclude_columns, errors='ignore')
+
+
+```
+
+
+## Summary of Findings
+
+### Identification of variables that affect financial inclusion
+
+The correlation analysis reveals that digital payments, savings behavior, and mobile money usage are the strongest drivers of financial inclusion, with correlations exceeding 0.85. Urban populations and individuals in the labor force show higher financial inclusion compared to rural and out-of-labor-force groups. Access to technology, such as mobile phones and the internet, also plays a significant role, with correlations above 0.70. Gender-specific analysis indicates that women and men exhibit similar trends, though women show slightly stronger correlations in areas like saving for education or old age. 
+
+```{python, echo=FALSE, message=FALSE, fig.align='center', out.width="80%"}
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import textwrap
+
+# Step 3: Exploratory Data Analysis
+
+# Identify variables that affect financial_inclusion_index
+correlation_matrix = data.select_dtypes(include=[np.number]).corr()
+
+# Filter correlations to only include variables with correlation >= 0.5 with 'financial_inclusion_index'
+filtered_correlations = correlation_matrix[['financial_inclusion_index']].loc[
+    correlation_matrix['financial_inclusion_index'].abs() >= 0.5
+].sort_values(by='financial_inclusion_index', ascending=False)
+
+# Set up figure size dynamically based on the number of variables
+plt.figure(figsize=(10, len(filtered_correlations) * 0.5))
+
+# Create heatmap
+ax = sns.heatmap(filtered_correlations, annot=True, cmap='coolwarm', fmt=".2f", linewidths=0.5, cbar=True)
+
+# Wrap y-axis labels to prevent truncation
+wrapped_labels = [textwrap.fill(label, width=30) for label in filtered_correlations.index]
+ax.set_yticklabels(wrapped_labels, rotation=0, fontsize=10)
+
+# Adjust x-axis labels
+plt.xticks(rotation=0, fontsize=12)
+
+plt.title('Correlation with Financial Inclusion Index (>= 0.5)', fontsize=14, pad=10)
+plt.xlabel('')
+plt.ylabel('')
+
+plt.tight_layout()  # Ensures everything fits well
+plt.show()
+
+
+
+
+```
+
+
+
+```{python, echo=FALSE}
+
+Corr_table = correlation_matrix[['financial_inclusion_index']].sort_values(by='financial_inclusion_index', ascending=False)
+
+# Filter variables with correlation > 0.6
+selected_variables = Corr_table[Corr_table['financial_inclusion_index'] >= 0.7]
+
+# Extract the variable names (index of the DataFrame)
+selected_variable_names = selected_variables.index.tolist()
+
+# Subset the original data using the selected variable names
+ML_data = data[selected_variable_names]
+
+```
+
+### Financial Service-Usage/Access Distribution Across Population Demographics
+
+The analysis shows that less than half of people aged 15+ actively use financial accounts (median: 43.34%). Those in the labor force have higher account ownership (median: 49.85%) compared to those not working (median: 30.03%), highlighting the impact of employment on financial access. Men are more likely to borrow from formal institutions (median: 10.02%) and own debit/credit cards (median: 16.39%) than women (borrowing: median 6.87%; card ownership: median 10.74%). 
+
+```{python, echo=FALSE,message=FALSE, fig.align='center', out.width="90%"}
+
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import textwrap
+from matplotlib.patches import FancyBboxPatch
+
+# Load your dataset (assuming it's already loaded as `data`)
+# Example: data = pd.read_csv('financial_inclusion_data.csv')
+
+# Analyze distribution across demographics (e.g., gender, age, labor force status)
+demographic_columns = [
+    'Has an active Account (% age 15+)',
+    'Account, in labor force (% age 15+)',
+    'Account, out of labor force (% age 15+)',
+    'Borrowed from a formal financial institution, male (% age 15+)',
+    'Owns a debit or credit card, male (% age 15+)',
+    'Borrowed from a formal financial institution, female (% age 15+)',
+    'Owns a debit or credit card, female (% age 15+)'
+]
+
+# Create a DataFrame for plotting
+demographic_data = data[demographic_columns]
+
+# Create a box plot
+plt.figure(figsize=(6, 5))
+box_plot = sns.boxplot(data=demographic_data)
+
+# Add statistics annotations (Median, Mean) inside the box plot area with a white background box
+for i, column in enumerate(demographic_columns):
+    # Get the statistics
+    median = demographic_data[column].median()
+    mean = demographic_data[column].mean()
+
+    # Create the label text
+    label_text = f'Median: {median:.2f}\nMean: {mean:.2f}'
+
+    # Calculate positions for the annotation box
+    y_position = median  # Use median position for label placement
+    offset = 0.1  # Small offset to avoid exact overlap with the median line
+
+    # Create a FancyBboxPatch for the box around the label
+    
+    # Place the label inside the box
+    plt.text(i, y_position + offset + 0.05, label_text, ha='center', color='black', fontsize=8, zorder=15)
+
+# Wrap labels on the x-axis
+wrapped_labels = [textwrap.fill(label, 20) for label in demographic_columns]  # Wrap to 20 characters per line
+plt.xticks(ticks=range(len(demographic_columns)), labels=wrapped_labels, rotation=45, ha='right')
+
+# Add title and labels
+plt.title('Distribution of Financial Service Usage/Access Across Demographics', fontsize=10)
+plt.ylabel('Percentage (%)', fontsize=10)
+
+# Adjust layout to prevent overlap
+plt.tight_layout()
+
+# Show the plot
+plt.show()
+
+
+```
+
+
+### Financial Service-Usage/Access Distribution Across Socio-Economic Dynamics
+
+The analysis of socio-economic dynamics reveals that digital payments are widely adopted, with a median of 48.64% of individuals aged 15+ having made or received digital payments, matching the mean of 48.64%. This indicates a balanced distribution and highlights the growing role of digital financial services in promoting inclusion. On the other hand, savings through informal channels, such as savings clubs or individuals outside the family, is less common among women, with a median of 23.59% and a mean of 24.40%. This suggests that while digital payments are becoming mainstream, informal savings mechanisms remain a secondary option for many women. 
+
+```{python, echo=FALSE,message=FALSE, fig.align='center', out.width="90%"}
+
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import textwrap
+from matplotlib.patches import FancyBboxPatch
+
+# Load your dataset (assuming it's already loaded as `data`)
+# Example: data = pd.read_csv('financial_inclusion_data.csv')
+
+# Analyze distribution across socio-economic dynamics (e.g., digital payments, savings)
+socio_economic_columns = [
+    'Made or received a digital payment (% age 15+)',
+    'Saved using a savings club or a person outside the family, female (% age 15+)'
+]
+
+# Create a DataFrame for plotting
+socio_economic_data = data[socio_economic_columns]
+
+# Create a box plot
+plt.figure(figsize=(6, 5))
+box_plot = sns.boxplot(data=socio_economic_data)
+
+# Add statistics annotations (Median, Mean) inside the box plot area with a white background box
+for i, column in enumerate(socio_economic_columns):
+    # Get the statistics
+    median = socio_economic_data[column].median()
+    mean = socio_economic_data[column].mean()
+
+    # Create the label text
+    label_text = f'Median: {median:.4f}\nMean: {mean:.4f}'
+
+    # Calculate positions for the annotation box
+    y_position = median  # Use median position for label placement
+    offset = 0.1  # Small offset to avoid exact overlap with the median line
+
+    # Create a FancyBboxPatch for the box around the label
+    
+    # Place the label inside the box
+    plt.text(i, y_position + offset + 0.05, label_text, ha='center', color='black', fontsize=8, zorder=15)
+
+# Wrap labels on the x-axis
+wrapped_labels = [textwrap.fill(label, 20) for label in socio_economic_columns]  # Wrap to 20 characters per line
+plt.xticks(ticks=range(len(socio_economic_columns)), labels=wrapped_labels, rotation=45, ha='right')
+
+# Add title and labels
+plt.title('Distribution of Socio-Economic Dynamics Across Demographics', fontsize=10)
+plt.ylabel('Percentage (%)', fontsize=10)
+
+# Adjust layout to prevent overlap
+plt.tight_layout()
+
+# Show the plot
+plt.show()
+
+
+```
+
+
+
+### Identify Gaps in Financial Service-Usage/Access (Marginalized Groups)
+
+The analysis of financial service usage and access among marginalized groups reveals notable disparities between men and women. On average, men are more likely to borrow from formal financial institutions (mean: 12.06%) and own debit/credit cards (mean: 18.67%) compared to women (borrowing: mean 8.83%; card ownership: mean 12.79%). These gaps highlight significant gender-based inequalities in access to formal financial services.
+
+```{python,echo=FALSE,message=FALSE, fig.align='center', out.width="90%"}
+
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import textwrap
+import numpy as np
+from scipy import stats
+
+# Reshape the data for comparison
+marginalized_groups = [
+    'Borrowed from a formal financial institution, male (% age 15+)',
+    'Borrowed from a formal financial institution, female (% age 15+)',
+    'Owns a debit or credit card, male (% age 15+)',
+    'Owns a debit or credit card, female (% age 15+)'
+]
+
+# Create a long-form DataFrame for Seaborn
+comparison_data = ML_data[marginalized_groups].melt(var_name='Group', value_name='Percentage')
+
+# Add a column to distinguish between male and female
+comparison_data['Gender'] = comparison_data['Group'].apply(lambda x: 'Male' if 'male' in x else 'Female')
+
+# Plot comparisons
+plt.figure(figsize=(6, 5))
+ax = sns.boxplot(x='Group', y='Percentage', hue='Gender', data=comparison_data, palette='Set2')
+
+# Add mean and mode to the plot
+for i, group in enumerate(marginalized_groups):
+    # Filter data for the current group
+    group_data = comparison_data[comparison_data['Group'] == group]['Percentage']
+    
+    # Calculate mean
+    mean = group_data.mean()
+    
+    # Calculate mode (handle cases where mode might not exist)
+    try:
+        mode = stats.mode(group_data).mode[0]  # Calculate mode
+    except IndexError:
+        mode = np.nan  # If mode doesn't exist, set it to NaN
+    
+    # Add mean and mode to the plot (only if mode is not NaN)
+    ax.text(i, mean, f'Mean: {mean:.2f}', color='red', ha='center', va='bottom', fontsize=8, fontweight='bold')
+    if not np.isnan(mode):
+        ax.text(i, mode, f'Mode: {mode:.2f}', color='blue', ha='center', va='top', fontsize=8, fontweight='bold')
+
+# Wrap labels on the x-axis
+wrapped_labels = [textwrap.fill(label, 20) for label in marginalized_groups]  # Wrap to 20 characters per line
+plt.xticks(ticks=range(len(marginalized_groups)), labels=wrapped_labels, rotation=45, ha='right')
+
+# Add title and labels
+plt.title('Financial Service Usage/Access Gaps in Marginalized Groups', fontsize=10)
+plt.xlabel('Group', fontsize=10)
+plt.ylabel('Percentage (%)', fontsize=14)
+plt.legend(title='Gender', bbox_to_anchor=(1.05, 1), loc='upper left')
+
+plt.tight_layout()
+plt.show()
+
+
+```
+
+
+
+
+## Step 4: Build and Evaluate Predictive Models
+
+### Model Comparison
+
+The model performance comparison reveals that Linear Regression outperforms the other models across all evaluation metrics. It achieves the lowest Mean Absolute Error (MAE: 3.58) and Mean Squared Error (MSE: 17.72), as well as the highest R-squared (R²: 0.95), indicating it explains 95% of the variance in the data. This makes it the most accurate and reliable model for predicting financial inclusion. The Gradient Boosting Regressor also performs well, with an R² of 0.86, but it has higher errors (MAE: 6.39, MSE: 49.5) compared to Linear Regression. The Random Forest Regressor follows with an R² of 0.79, but its errors are even higher (MAE: 6.9, MSE: 74.73). In contrast, K-Nearest Neighbors (KNN) and Support Vector Regressor (SVR) perform poorly. KNN has moderate accuracy (R²: 0.64) but high errors (MAE: 10.32, MSE: 126.3), while SVR performs the worst, with an R² of only 0.09 and very high errors (MAE: 16.41, MSE: 321.71). In summary, Linear Regression is the best-performing model for this task, offering high accuracy and low prediction errors, making it suitable for analyzing financial inclusion.
+
+```{python, echo=FALSE}
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.svm import SVR
+from sklearn.neighbors import KNeighborsRegressor
+from tabulate import tabulate
+
+# Split into features (X) and target (y)
+X = ML_data.drop(columns=['financial_inclusion_index'])  # Drop intermediate grades to avoid data leakage
+y = ML_data['financial_inclusion_index']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+def evaluate_model(model, X_train, X_test, y_train, y_test):
+    # Train the model
+    model.fit(X_train, y_train)
+    
+    # Make predictions
+    y_pred = model.predict(X_test)
+    
+    # Calculate evaluation metrics
+    mae = mean_absolute_error(y_test, y_pred)
+    mse = mean_squared_error(y_test, y_pred)
+    r2 = r2_score(y_test, y_pred)
+    
+    # Return results as a dictionary
+    return {
+        'Model': model.__class__.__name__,
+        'MAE': round(mae, 2),
+        'MSE': round(mse, 2),
+        'R²': round(r2, 2)
+    }
+    
+# Initialize models
+models = [
+    LinearRegression(),
+    RandomForestRegressor(random_state=42),
+    GradientBoostingRegressor(random_state=42),
+    SVR(),
+    KNeighborsRegressor()
+]
+
+# Evaluate each model
+results = []
+for model in models:
+    results.append(evaluate_model(model, X_train, X_test, y_train, y_test))
+
+# Convert results to a DataFrame for better visualization
+results_df = pd.DataFrame(results)
+
+# Print results in a tabular format
+print("Model Performance Comparison:")
+print(tabulate(results_df, headers='keys', tablefmt='pretty', showindex=False))
+
+```
+
+
+#### Validate the Linear Regression Model
+
+The cross-validation results for the Linear Regression model demonstrate strong and consistent performance across different subsets of the data. The R² scores for the 5 folds are [0.97, 0.91, 0.93, 0.71, 0.71], indicating that the model explains between 71% and 97% of the variance in the data, depending on the subset. The mean R² score of 0.85 confirms that the model is highly reliable overall, capturing 85% of the variance on average. 
+
+```{python, echo=FALSE}
+
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import cross_val_score
+import numpy as np
+
+# Initialize the Linear Regression model
+model = LinearRegression()
+
+# Perform cross-validation (e.g., 5-fold)
+cv_scores = cross_val_score(model, X, y, cv=5, scoring='r2')  # Use 'neg_mean_squared_error' for MSE
+
+# Round the scores to 2 decimal places
+cv_scores_rounded = np.round(cv_scores, 2)
+mean_cv_score_rounded = round(cv_scores.mean(), 2)
+
+# Print cross-validation results
+print("Cross-Validation R² Scores:", cv_scores_rounded)
+print("Mean R² Score:", mean_cv_score_rounded)
+
+
+```
+
+
+#### Interpret the Model Coefficients
+
+The Linear Regression coefficients reveal key drivers and barriers to financial inclusion. Borrowing by men and active account usage have the strongest positive impacts, significantly boosting financial inclusion. In contrast, borrowing by women and card ownership by men show negative effects, highlighting potential gender-based inequalities. Labor force participation (both in and out) is associated with lower financial inclusion, suggesting challenges in accessing formal financial services. Digital payments have a moderate positive effect, while informal savings by women have minimal impact. 
+
+
+```{python, echo=FALSE}
+from tabulate import tabulate
+import pandas as pd
+import textwrap
+
+# Train the model on the full training set
+model.fit(X_train, y_train)
+
+# Get the coefficients and corresponding feature names
+coefficients = pd.DataFrame({
+    'Feature': X_train.columns,  # Ensure the correct feature names
+    'Coefficient': model.coef_
+})
+
+# Round coefficients to 2 decimal places
+coefficients['Coefficient'] = coefficients['Coefficient'].apply(lambda x: round(x, 2))
+
+# Sort by absolute value of coefficients to see the most important features
+coefficients['Absolute_Coefficient'] = coefficients['Coefficient'].abs()
+coefficients = coefficients.sort_values(by='Absolute_Coefficient', ascending=False)
+
+# Drop the absolute coefficient column before printing
+coefficients = coefficients.drop(columns=['Absolute_Coefficient'])
+
+# Wrap the 'Feature' and 'Coefficient' columns to a maximum width of 20 characters
+coefficients['Feature'] = coefficients['Feature'].apply(lambda x: textwrap.fill(x, width=50))
+coefficients['Coefficient'] = coefficients['Coefficient'].apply(lambda x: textwrap.fill(str(x), width=10))
+
+# Print the coefficients
+print("Model Coefficients:")
+print(tabulate(coefficients, headers='keys', tablefmt='pretty', showindex=False))
+
+
+
+```
+
+
+#### Model Predictions
+
+The Linear Regression model shows mixed performance in predicting financial inclusion. It tends to overestimate lower values (e.g., predicting 18.46 for an actual value of 11.46), indicating challenges in accurately predicting low-inclusion scenarios. However, it performs well for moderate to high inclusion levels, with predictions closely matching actual values (e.g., predicting 55.16 for an actual value of 54.3).
+
+```{python, echo=FALSE}
+from tabulate import tabulate
+import pandas as pd
+
+# Make predictions on the test set
+y_pred = model.predict(X_test)
+
+# Compare predictions with actual values
+results = pd.DataFrame({
+    'Actual': y_test.round(2),      # Round actual values
+    'Predicted': y_pred.round(2)    # Round predicted values
+})
+
+# Print the first few predictions
+print("Predictions vs Actual Values:")
+print(tabulate(results.head(10), headers='keys', tablefmt='pretty', showindex=False))
+
+
+```
+
+### Model Evaluation
+
+The Linear Regression model performs exceptionally well, with a low MAE (3.58) and MSE (17.72), indicating accurate predictions with minimal errors. Its high R² value (0.95) confirms it explains 95% of the variance in the data, making it a reliable and effective tool for predicting financial inclusion.
+
+```{python, echo=FALSE}
+
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from tabulate import tabulate
+
+# Calculate evaluation metrics
+mae = round(mean_absolute_error(y_test, y_pred), 2)
+mse = round(mean_squared_error(y_test, y_pred), 2)
+r2 = round(r2_score(y_test, y_pred), 2)
+
+# Create a table for better readability
+metrics = [
+    ["Mean Absolute Error (MAE)", mae],
+    ["Mean Squared Error (MSE)", mse],
+    ["R-squared (R²)", r2]
+]
+
+# Print the metrics using tabulate
+print("Model Evaluation Metrics:")
+print(tabulate(metrics, headers=["Metric", "Value"], tablefmt="pretty"))
+
+```
+
+\newpage
+
+# References {-}
+
+
+
+
+
+
+
+
+
