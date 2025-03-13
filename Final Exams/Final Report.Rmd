@@ -2,7 +2,7 @@
 title: "FACULTY OF ENGINEERING, DESIGN AND TECHNOLOGY DEPARTMENT OF COMPUTING AND TECHNOLOGY EASTER 2025 SEMESTER EXAMINATION - DATA SCIENCE LIFE CYCLE FINAL EXAMS"
 author:
   - name: Efprem Okello - J25M19/001, Access Number - B31324
-    email: okelloefprem@gmail.com  # Replace with actual email
+    email: okelloefprem@gmail.com 
     affiliation: Uganda Christian University
     correspondingauthor: true
 address:
